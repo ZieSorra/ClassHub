@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useClassHub } from '../../context/ClassHubContext';
 import { StudentNavTab } from '../../types';
 
 export const StudentOtherViews: React.FC<{ tab: StudentNavTab }> = ({ tab }) => {
-  const { currentStudent, assignments, handnotes, quizzes, openModal, showToast } = useClassHub();
+  const { currentStudent, assignments, handnotes, quizzes, openModal, showToast, updateStudentNickname } = useClassHub();
+  const [nicknameDraft, setNicknameDraft] = useState(currentStudent.nickname);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   if (tab === 'presensi') {
     return (
@@ -178,6 +181,104 @@ export const StudentOtherViews: React.FC<{ tab: StudentNavTab }> = ({ tab }) => 
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (tab === 'profil') {
+    const handleNicknameSave = (event: React.FormEvent) => {
+      event.preventDefault();
+      updateStudentNickname(currentStudent.id, nicknameDraft);
+    };
+
+    const handleDemoPasswordChange = (event: React.FormEvent) => {
+      event.preventDefault();
+      if (newPassword.length < 8) {
+        showToast('error', 'Kata Sandi Terlalu Pendek', 'Gunakan minimal 8 karakter untuk simulasi ini.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showToast('error', 'Konfirmasi Tidak Cocok', 'Ulangi kata sandi baru dengan benar.');
+        return;
+      }
+      setNewPassword('');
+      setConfirmPassword('');
+      showToast('info', 'Simulasi Selesai', 'Formulir tervalidasi. Kata sandi tidak disimpan karena autentikasi masih berupa prototype.');
+    };
+
+    return (
+      <div className="w-full px-4 sm:px-6 md:px-8 py-6 max-w-5xl mx-auto space-y-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#eff4ff]">
+          <h1 className="text-xl font-extrabold text-[#0b1c30]">Profil Saya</h1>
+          <p className="text-xs text-[#434655] mt-1">Data dummy untuk prototype ClassHub. Data resmi ditampilkan sebagai informasi baca-saja.</p>
+        </div>
+
+        <section className="bg-white p-6 rounded-2xl shadow-sm border border-[#eff4ff]">
+          <div className="flex items-center gap-4 mb-6">
+            {currentStudent.photo ? (
+              <img src={currentStudent.photo} alt="" className="w-16 h-16 rounded-full object-cover" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xl">{currentStudent.initials}</div>
+            )}
+            <div>
+              <h2 className="text-lg font-bold text-[#0b1c30]">{currentStudent.name}</h2>
+              <p className="text-sm text-slate-500">{currentStudent.classRombel} · NIS {currentStudent.nis}</p>
+              <span className="inline-flex mt-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold">Data simulasi</span>
+            </div>
+          </div>
+
+          <h3 className="text-sm font-bold text-[#0b1c30] mb-3">Data Resmi (Baca Saja)</h3>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            {[
+              ['Nama lengkap', currentStudent.name],
+              ['NIS', currentStudent.nis],
+              ['NISN', currentStudent.nisn],
+              ['Rombel', currentStudent.classRombel],
+              ['Status', currentStudent.status],
+              ['Tahun ajaran', '2026/2027 · Semester Genap']
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <dt className="text-[11px] font-semibold text-slate-500">{label}</dt>
+                <dd className="mt-1 text-sm font-semibold text-slate-800">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <form onSubmit={handleNicknameSave} className="border-t border-slate-100 pt-5">
+            <h3 className="text-sm font-bold text-[#0b1c30] mb-1">Preferensi Pribadi</h3>
+            <p className="text-xs text-slate-500 mb-3">Nama panggilan hanya mengubah data demo pada browser ini.</p>
+            <label htmlFor="student-nickname" className="block text-xs font-semibold text-slate-700 mb-1.5">Nama panggilan</label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                id="student-nickname"
+                value={nicknameDraft}
+                onChange={event => setNicknameDraft(event.target.value)}
+                maxLength={40}
+                required
+                className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button type="submit" className="rounded-xl bg-[#004ac6] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700">Simpan Preferensi</button>
+            </div>
+          </form>
+        </section>
+
+        <section className="bg-white p-6 rounded-2xl shadow-sm border border-[#eff4ff]">
+          <h2 className="text-sm font-bold text-[#0b1c30] mb-1">Simulasi Ganti Kata Sandi</h2>
+          <p className="text-xs text-slate-500 mb-4">Formulir ini hanya menguji validasi. Kata sandi tidak disimpan dan belum terhubung ke layanan autentikasi.</p>
+          <form onSubmit={handleDemoPasswordChange} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="student-new-password" className="block text-xs font-semibold text-slate-700 mb-1.5">Kata sandi baru (min. 8 karakter)</label>
+              <input id="student-new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} minLength={8} autoComplete="new-password" required className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label htmlFor="student-confirm-password" className="block text-xs font-semibold text-slate-700 mb-1.5">Ulangi kata sandi</label>
+              <input id="student-confirm-password" type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} minLength={8} autoComplete="new-password" required className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div className="sm:col-span-2">
+              <button type="submit" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800 hover:bg-blue-100">Uji Validasi Kata Sandi</button>
+            </div>
+          </form>
+        </section>
       </div>
     );
   }
