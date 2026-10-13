@@ -191,6 +191,10 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateStudentAttendance = (studentId: string, status: AttendanceStatus, note?: string) => {
+    const previousEntry = attendanceList.find(entry => entry.studentId === studentId);
+    const wasPresent = previousEntry?.status === 'hadir';
+    const isPresent = status === 'hadir';
+
     setAttendanceList(prev => {
       const idx = prev.findIndex(a => a.studentId === studentId);
       const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
@@ -202,20 +206,24 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return [...prev, { studentId, status, time: currentTime, note }];
     });
 
-    // Update student's attendance stats
-    setStudents(prev => prev.map(s => {
-      if (s.id === studentId) {
-        const isHadir = status === 'hadir';
-        return {
-          ...s,
-          attendanceRate: isHadir ? 98 : (status === 'sakit' ? 86 : 94),
-          recentAttendance5Days: [
-            ...s.recentAttendance5Days.slice(1),
-            { day: 'Hari Ini', date: 'Hari ini', status, time: 'Tercatat' }
-          ]
-        };
-      }
-      return s;
+    setStudents(prev => prev.map(student => {
+      if (student.id !== studentId) return student;
+      const attendanceDaysCount = Math.max(0, Math.min(
+        student.totalDays,
+        student.attendanceDaysCount + Number(isPresent) - Number(wasPresent)
+      ));
+      const todayEntry = { day: 'Hari Ini', date: 'Hari ini', status, time: 'Tercatat' };
+      const hasToday = student.recentAttendance5Days.some(entry => entry.date === 'Hari ini');
+      const recentAttendance5Days = hasToday
+        ? student.recentAttendance5Days.map(entry => entry.date === 'Hari ini' ? todayEntry : entry)
+        : [...student.recentAttendance5Days.slice(-4), todayEntry];
+
+      return {
+        ...student,
+        attendanceDaysCount,
+        attendanceRate: student.totalDays > 0 ? Math.round((attendanceDaysCount / student.totalDays) * 100) : 0,
+        recentAttendance5Days
+      };
     }));
 
     showToast('success', 'Presensi Diperbarui', `Status presensi berhasil diubah ke ${status.toUpperCase()}.`);
