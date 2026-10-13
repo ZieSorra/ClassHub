@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   RoleMode, 
   TeacherNavTab, 
@@ -171,6 +171,9 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Toasts
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Prevent duplicate verification from rapid repeated clicks before React re-renders.
+  const verifiedTransactionIdsRef = useRef<Set<string>>(new Set());
 
   // Sync to local storage
   useEffect(() => {
@@ -349,6 +352,11 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const verifyTransaction = (txId: string) => {
+    if (verifiedTransactionIdsRef.current.has(txId)) {
+      showToast('info', 'Transaksi Sudah Diproses', 'Transaksi ini sudah diproses; saldo tidak dikurangi lagi.');
+      return;
+    }
+
     const transaction = transactions.find(item => item.id === txId);
     if (!transaction) {
       showToast('error', 'Transaksi Tidak Ditemukan', 'Transaksi demo yang dipilih tidak tersedia.');
@@ -359,6 +367,9 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
+    // Lock synchronously before scheduling React state updates, so rapid double clicks
+    // cannot deduct the same transaction twice before the next render.
+    verifiedTransactionIdsRef.current.add(txId);
     setTransactions(prev => prev.map(item => item.id === txId
       ? { ...item, status: 'lunas', verifiedBy: 'Ibu Nurul Aini, S.Pd.' }
       : item
@@ -428,6 +439,7 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const resetToDefaults = () => {
+    verifiedTransactionIdsRef.current.clear();
     localStorage.removeItem(`${STORAGE_KEY}_students`);
     localStorage.removeItem(`${STORAGE_KEY}_attendance`);
     localStorage.removeItem(`${STORAGE_KEY}_transactions`);
