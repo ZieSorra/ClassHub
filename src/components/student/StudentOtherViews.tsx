@@ -42,8 +42,18 @@ export const StudentOtherViews: React.FC<{ tab: StudentNavTab }> = ({ tab }) => 
             {currentStudent.recentAttendance5Days.map((d, i) => (
               <div key={i} className="p-3 rounded-xl bg-[#eff4ff] text-center">
                 <p className="text-[11px] text-slate-500">{d.day}</p>
-                <span className="material-symbols-outlined text-[24px] text-[#006056] my-1">check_circle</span>
-                <p className="text-xs font-bold text-slate-800 font-mono">{d.time || '07:05 WIB'}</p>
+                <span
+                  className={`material-symbols-outlined text-[24px] my-1 ${
+                    d.status === 'hadir' ? 'text-emerald-600' :
+                    d.status === 'sakit' ? 'text-amber-600' :
+                    d.status === 'izin' ? 'text-blue-600' : 'text-rose-600'
+                  }`}
+                  aria-label={`Status ${d.status}`}
+                >
+                  {d.status === 'hadir' ? 'check_circle' : d.status === 'sakit' ? 'medical_services' : d.status === 'izin' ? 'event_busy' : 'cancel'}
+                </span>
+                <p className="text-xs font-bold text-slate-800">{d.status === 'hadir' ? 'Hadir' : d.status === 'sakit' ? 'Sakit' : d.status === 'izin' ? 'Izin' : 'Alpa'}</p>
+                <p className="text-[11px] font-mono text-slate-500">{d.time || '—'}</p>
               </div>
             ))}
           </div>
