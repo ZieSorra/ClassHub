@@ -41,8 +41,8 @@ export const StudentLogin: React.FC = () => {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Mock validation
-      if (nis.trim() === '20260512' || nis.trim() === 'siswa' || nis.trim() === '12345') {
+      // Demo-only validation. This is not production authentication.
+      if (nis.trim() === '20260512' && password === 'fauzan123') {
         setSuccessMessage('Berhasil Masuk! Mengalihkan ke Ruang Belajar Ceria...');
         showToast('success', 'Selamat Datang, Ahmad!', 'Autentikasi berhasil. Selamat belajar di Kelas V-A!');
         setTimeout(() => {
@@ -51,7 +51,7 @@ export const StudentLogin: React.FC = () => {
         }, 800);
       } else {
         setIsLoading(false);
-        setErrorMessage('NIS atau kata sandi tidak ditemukan. Gunakan NIS contoh: 20260512');
+        setErrorMessage('NIS atau kata sandi tidak ditemukan. Gunakan akun demo: NIS 20260512, kata sandi fauzan123');
       }
     }, 700);
   };
@@ -132,7 +132,7 @@ export const StudentLogin: React.FC = () => {
             </div>
 
             <div className="relative z-10 pt-2 border-t border-white/15 flex items-center justify-between text-xs text-blue-200">
-              <span>SD Bintang Bangsa</span>
+              <span>SD Islam Darul Mu'minin</span>
               <span>Semester Genap</span>
             </div>
           </div>
@@ -251,7 +251,7 @@ export const StudentLogin: React.FC = () => {
                     Lupa kata sandi? Hubungi guru kelas.
                   </span>
                   <span className="text-[11px] text-slate-400 italic">
-                    *Data simulasi mockup
+                    *Mode simulasi — bukan autentikasi produksi
                   </span>
                 </div>
 
@@ -278,7 +278,7 @@ export const StudentLogin: React.FC = () => {
               {/* Security Notice */}
               <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 text-center">
                 <span className="material-symbols-outlined text-[16px]">shield</span>
-                <span>Portal terlindungi untuk Kelas V. Akses khusus siswa terdaftar.</span>
+                <span>Login ini adalah simulasi frontend. Belum menggunakan autentikasi produksi.</span>
               </div>
             </div>
           </div>
