@@ -23,6 +23,7 @@ const AppContent: React.FC = () => {
   } = useClassHub();
 
   const [isMiniSidebar, setIsMiniSidebar] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // 1. Role: Student Login Page
   if (roleMode === 'login-siswa') {
@@ -75,12 +76,17 @@ const AppContent: React.FC = () => {
   return (
     <div className="bg-[#f8f9ff] min-h-screen font-sans text-[#0b1c30]">
       <TeacherSidebar 
-        isMini={isMiniSidebar} 
+        isMini={isMiniSidebar}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         onToggleMini={() => setIsMiniSidebar(!isMiniSidebar)} 
       />
 
-      <div className={`transition-all duration-200 ${isMiniSidebar ? 'pl-20' : 'pl-72'}`}>
-        <TeacherHeader isMiniSidebar={isMiniSidebar} />
+      <div className={`transition-all duration-200 ${isMiniSidebar ? 'pl-0 lg:pl-20' : 'pl-0 lg:pl-72'}`}>
+        <TeacherHeader
+          isMiniSidebar={isMiniSidebar}
+          onMenuClick={() => setIsMobileSidebarOpen(open => !open)}
+        />
 
         <main className="w-full pt-20 px-4 sm:px-6 lg:px-8 bg-[#f8f9ff] min-h-screen">
           <div className="max-w-[1560px] mx-auto py-6">
