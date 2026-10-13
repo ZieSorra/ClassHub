@@ -127,12 +127,40 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [feeCategories] = useState<FeeCategory[]>(INITIAL_FEE_CATEGORIES);
-  const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
+  const [assignments, setAssignments] = useState<Assignment[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_assignments`);
+      return saved ? JSON.parse(saved) : INITIAL_ASSIGNMENTS;
+    } catch {
+      return INITIAL_ASSIGNMENTS;
+    }
+  });
   const [handnotes] = useState<Handnote[]>(INITIAL_HANDNOTES);
-  const [quizzes, setQuizzes] = useState<Quiz[]>(INITIAL_QUIZZES);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_quizzes`);
+      return saved ? JSON.parse(saved) : INITIAL_QUIZZES;
+    } catch {
+      return INITIAL_QUIZZES;
+    }
+  });
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_activityLogs`);
+      return saved ? JSON.parse(saved) : INITIAL_ACTIVITY_LOGS;
+    } catch {
+      return INITIAL_ACTIVITY_LOGS;
+    }
+  });
 
-  const [studentXp, setStudentXp] = useState<number>(120);
+  const [studentXp, setStudentXp] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_studentXp`);
+      return saved ? JSON.parse(saved) : 120;
+    } catch {
+      return 120;
+    }
+  });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedHandnote, setSelectedHandnote] = useState<Handnote | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
@@ -168,6 +196,22 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error(e);
     }
   }, [transactions]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_assignments`, JSON.stringify(assignments)); } catch (e) { console.error(e); }
+  }, [assignments]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_quizzes`, JSON.stringify(quizzes)); } catch (e) { console.error(e); }
+  }, [quizzes]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_activityLogs`, JSON.stringify(activityLogs)); } catch (e) { console.error(e); }
+  }, [activityLogs]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_studentXp`, JSON.stringify(studentXp)); } catch (e) { console.error(e); }
+  }, [studentXp]);
 
   const showToast = (type: 'success' | 'info' | 'error', title: string, message: string) => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 6);
@@ -361,6 +405,10 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.removeItem(`${STORAGE_KEY}_students`);
     localStorage.removeItem(`${STORAGE_KEY}_attendance`);
     localStorage.removeItem(`${STORAGE_KEY}_transactions`);
+    localStorage.removeItem(`${STORAGE_KEY}_assignments`);
+    localStorage.removeItem(`${STORAGE_KEY}_quizzes`);
+    localStorage.removeItem(`${STORAGE_KEY}_activityLogs`);
+    localStorage.removeItem(`${STORAGE_KEY}_studentXp`);
     setStudents(INITIAL_STUDENTS);
     setAttendanceList(INITIAL_DAILY_ATTENDANCE);
     setTransactions(INITIAL_TRANSACTIONS);
