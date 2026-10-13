@@ -3,9 +3,10 @@ import { useClassHub } from '../../context/ClassHubContext';
 
 interface TeacherHeaderProps {
   isMiniSidebar?: boolean;
+  onMenuClick?: () => void;
 }
 
-export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ isMiniSidebar = false }) => {
+export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ isMiniSidebar = false, onMenuClick }) => {
   const { setRoleMode, setTeacherTab, showToast, resetToDefaults } = useClassHub();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -21,13 +22,21 @@ export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ isMiniSidebar = fa
 
   return (
     <header 
-      className={`fixed top-0 right-0 h-20 bg-white/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-8 border-b border-[#eff4ff] transition-all duration-200 ${
-        isMiniSidebar ? 'left-20' : 'left-72'
+      className={`fixed top-0 right-0 h-20 bg-white/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-3 sm:px-8 border-b border-[#eff4ff] transition-all duration-200 ${
+        isMiniSidebar ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
       }`}
     >
-      {/* Left: Search Bar & Context */}
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
-        <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full max-w-md">
+      {/* Left: Mobile Menu, Search Bar & Context */}
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 max-w-xl">
+        <button
+          type="button"
+          aria-label="Buka navigasi guru"
+          className="lg:hidden shrink-0 p-2 rounded-xl bg-[#eff4ff] text-[#004ac6] hover:bg-[#dce9ff]"
+          onClick={onMenuClick}
+        >
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+        <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full min-w-0 max-w-md">
           <span className="material-symbols-outlined absolute left-3 text-[#434655] text-[20px]">
             search
           </span>
@@ -35,7 +44,7 @@ export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ isMiniSidebar = fa
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari siswa, NISN, atau tugas..."
+            placeholder="Cari siswa atau tugas..."
             className="h-10 pl-10 pr-12 rounded-xl bg-[#eff4ff] text-[#0b1c30] placeholder:text-[#737686] text-[13px] w-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all border border-transparent focus:border-[#2563eb]"
           />
           <kbd className="absolute right-3 px-1.5 py-0.5 rounded bg-[#d3e4fe] text-[11px] font-bold text-[#434655]">
