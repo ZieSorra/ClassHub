@@ -270,17 +270,37 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const verifyTransaction = (txId: string) => {
-    setTransactions(prev => prev.map(t => {
-      if (t.id === txId) {
-        return {
-          ...t,
-          status: 'lunas',
-          verifiedBy: 'Ibu Nurul Aini, S.Pd.'
-        };
-      }
-      return t;
-    }));
-    showToast('success', 'Pembayaran Diverifikasi', 'Status transaksi telah diubah menjadi LUNAS.');
+    const transaction = transactions.find(item => item.id === txId);
+    if (!transaction) {
+      showToast('error', 'Transaksi Tidak Ditemukan', 'Transaksi demo yang dipilih tidak tersedia.');
+      return;
+    }
+    if (transaction.status === 'lunas') {
+      showToast('info', 'Transaksi Sudah Lunas', 'Pembayaran ini sudah diverifikasi; saldo tidak dikurangi lagi.');
+      return;
+    }
+
+    setTransactions(prev => prev.map(item => item.id === txId
+      ? { ...item, status: 'lunas', verifiedBy: 'Ibu Nurul Aini, S.Pd.' }
+      : item
+    ));
+    setStudents(prev => prev.map(student => student.id === transaction.studentId
+      ? { ...student, kasPendingAmount: Math.max(0, student.kasPendingAmount - transaction.amount) }
+      : student
+    ));
+    setActivityLogs(prev => [{
+      id: 'log-' + Date.now(),
+      actor: 'Ibu Nurul Aini',
+      actionText: 'memverifikasi pembayaran',
+      highlightText: `${transaction.category} (Rp ${transaction.amount.toLocaleString('id-ID')})`,
+      suffixText: `untuk ${transaction.studentName}.`,
+      timeAgo: 'Baru saja',
+      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+      icon: 'verified',
+      iconBg: 'bg-tertiary-fixed',
+      iconColor: 'text-tertiary'
+    }, ...prev]);
+    showToast('success', 'Pembayaran Diverifikasi', 'Status transaksi dan tunggakan siswa berhasil diperbarui.');
   };
 
   const submitAssignmentProgress = (assignmentId: string, progress: number) => {
