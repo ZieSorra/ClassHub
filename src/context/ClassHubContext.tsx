@@ -275,7 +275,33 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const batchSetAttendance = (entries: AttendanceEntry[]) => {
+    const previousByStudent = new Map<string, AttendanceEntry>(
+      attendanceList.map(entry => [entry.studentId, entry])
+    );
     setAttendanceList(entries);
+    setStudents(prev => prev.map(student => {
+      const entry = entries.find(item => item.studentId === student.id);
+      if (!entry) return student;
+
+      const wasPresent = previousByStudent.get(student.id)?.status === 'hadir';
+      const isPresent = entry.status === 'hadir';
+      const attendanceDaysCount = Math.max(0, Math.min(
+        student.totalDays,
+        student.attendanceDaysCount + Number(isPresent) - Number(wasPresent)
+      ));
+      const todayEntry = { day: 'Hari Ini', date: 'Hari ini', status: entry.status, time: entry.time || 'Tercatat' };
+      const hasToday = student.recentAttendance5Days.some(item => item.date === 'Hari ini');
+      const recentAttendance5Days = hasToday
+        ? student.recentAttendance5Days.map(item => item.date === 'Hari ini' ? todayEntry : item)
+        : [...student.recentAttendance5Days.slice(-4), todayEntry];
+
+      return {
+        ...student,
+        attendanceDaysCount,
+        attendanceRate: student.totalDays > 0 ? Math.round((attendanceDaysCount / student.totalDays) * 100) : 0,
+        recentAttendance5Days
+      };
+    }));
     showToast('success', 'Presensi Berhasil Disimpan', `${entries.length} data presensi siswa telah disinkronkan.`);
   };
 
