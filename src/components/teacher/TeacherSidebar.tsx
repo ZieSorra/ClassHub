@@ -42,7 +42,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isMini = false, 
       )}
       <aside 
         className={`fixed left-0 top-0 h-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between transition-all duration-200 border-r border-[#eff4ff] ${
-          isMini ? 'w-20' : 'w-72'
+          isMini ? 'w-72 lg:w-20' : 'w-72'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
       <div className="flex flex-col flex-1 overflow-y-auto">
