@@ -287,7 +287,7 @@ export const StudentLogin: React.FC = () => {
 
       {/* Simple Footer */}
       <footer className="w-full py-4 text-center text-xs text-slate-400 border-t border-slate-200/60 bg-white">
-        <p>ClassHub © 2026/2027 SD Bintang Bangsa • Dikembangkan untuk pembelajaran ramah anak</p>
+        <p>ClassHub © 2026/2027 SD Islam Darul Mu'minin • Dikembangkan untuk pembelajaran ramah anak</p>
       </footer>
     </div>
   );
