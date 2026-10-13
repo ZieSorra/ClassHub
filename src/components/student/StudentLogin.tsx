@@ -199,7 +199,7 @@ export const StudentLogin: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* NIS Input */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="student-login-nis" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Nomor Induk Siswa (NIS) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -207,7 +207,13 @@ export const StudentLogin: React.FC = () => {
                       <span className="material-symbols-outlined text-[18px]">badge</span>
                     </div>
                     <input
+                      id="student-login-nis"
                       type="text"
+                      inputMode="numeric"
+                      autoComplete="username"
+                      pattern="[0-9]{5,8}"
+                      maxLength={8}
+                      required
                       value={nis}
                       onChange={(e) => setNis(e.target.value)}
                       placeholder="Contoh: 20260512"
@@ -218,7 +224,7 @@ export const StudentLogin: React.FC = () => {
 
                 {/* Password Input */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="student-login-password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Kata Sandi <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -226,7 +232,10 @@ export const StudentLogin: React.FC = () => {
                       <span className="material-symbols-outlined text-[18px]">lock</span>
                     </div>
                     <input
+                      id="student-login-password"
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Masukkan kata sandi akunmu"
@@ -234,6 +243,7 @@ export const StudentLogin: React.FC = () => {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                     >
