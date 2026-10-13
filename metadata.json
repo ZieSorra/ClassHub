@@ -1,0 +1,6 @@
+{
+  "name": "ClassHub - Sistem Guru SD & Portal Siswa",
+  "description": "Sistem manajemen kelas sekolah dasar dan portal belajar terpadu untuk Wali Kelas V-A dan siswa SD Bintang Bangsa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
