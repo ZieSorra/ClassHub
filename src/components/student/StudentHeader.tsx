@@ -12,6 +12,7 @@ export const StudentHeader: React.FC = () => {
     { id: 'tugas', label: 'Tugas' },
     { id: 'handnote', label: 'Handnote' },
     { id: 'bank-soal', label: 'Bank Soal' },
+    { id: 'profil', label: 'Profil Saya' },
   ];
 
   return (
