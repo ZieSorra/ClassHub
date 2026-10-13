@@ -48,6 +48,7 @@ interface ClassHubContextType {
   attendanceList: AttendanceEntry[];
   updateStudentAttendance: (studentId: string, status: AttendanceStatus, note?: string) => void;
   batchSetAttendance: (entries: AttendanceEntry[]) => void;
+  updateStudentNickname: (studentId: string, nickname: string) => void;
   
   transactions: Transaction[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'receiptNumber'>) => void;
@@ -311,6 +312,19 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     showToast('success', 'Pembayaran Diverifikasi', 'Status transaksi dan tunggakan siswa berhasil diperbarui.');
   };
 
+  const updateStudentNickname = (studentId: string, nickname: string) => {
+    const cleanNickname = nickname.trim().slice(0, 40);
+    if (!cleanNickname) {
+      showToast('error', 'Nama Panggilan Belum Valid', 'Nama panggilan tidak boleh kosong.');
+      return;
+    }
+    setStudents(prev => prev.map(student => student.id === studentId
+      ? { ...student, nickname: cleanNickname }
+      : student
+    ));
+    showToast('success', 'Preferensi Diperbarui', 'Nama panggilan demo berhasil diperbarui di browser ini.');
+  };
+
   const submitAssignmentProgress = (assignmentId: string, progress: number) => {
     setAssignments(prev => prev.map(a => {
       if (a.id === assignmentId) {
@@ -375,6 +389,7 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         attendanceList,
         updateStudentAttendance,
         batchSetAttendance,
+        updateStudentNickname,
         transactions,
         addTransaction,
         verifyTransaction,
