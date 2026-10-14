@@ -430,28 +430,77 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     showToast('success', 'Tugas Diperbarui', `Progres pengumpulan tugas kini ${safeProgress}%.`);
   };
 
+  
   const finishQuiz = (quizId: string, score: number, pointsAwarded: number) => {
     if (completedQuizIdsRef.current.has(quizId)) {
-      showToast('info', 'Kuis Sudah Diselesaikan', 'Hadiah XP untuk kuis ini sudah diberikan pada sesi demo ini.');
+      showToast(
+        'info',
+        'Kuis Sudah Diselesaikan',
+        'Hadiah XP untuk kuis ini sudah diberikan pada sesi demo ini.'
+      );
       return;
     }
 
-    const quizExists = quizzes.some(quiz => quiz.id === quizId);
-    if (!quizExists) {
-      showToast('error', 'Kuis Tidak Ditemukan', 'Kuis demo yang dipilih tidak tersedia.');
+    const quiz = quizzes.find(item => item.id === quizId);
+    if (!quiz) {
+      showToast(
+        'error',
+        'Kuis Tidak Ditemukan',
+        'Kuis demo yang dipilih tidak tersedia.'
+      );
+      return;
+    }
+
+    // Cegah XP diberikan lagi setelah halaman dimuat ulang pada hari yang sama.
+    const today = new Date().toLocaleDateString('id-ID');
+    const lastTakenDate = quiz.lastTakenDate;
+
+    if (
+      lastTakenDate === 'Hari ini' ||
+      lastTakenDate === today
+    ) {
+      completedQuizIdsRef.current.add(quizId);
+      showToast(
+        'info',
+        'Kuis Sudah Diselesaikan',
+        'Kuis ini sudah diselesaikan hari ini; XP tidak diberikan dua kali.'
+      );
       return;
     }
 
     completedQuizIdsRef.current.add(quizId);
-    const safeScore = Math.max(0, Math.min(100, Number.isFinite(score) ? score : 0));
-    const safePoints = Math.max(0, Number.isFinite(pointsAwarded) ? pointsAwarded : 0);
-    setQuizzes(prev => prev.map(q => q.id === quizId
-      ? { ...q, lastScore: safeScore, lastTakenDate: 'Hari ini', pointsAwarded: safePoints }
-      : q
-    ));
+
+    const safeScore = Math.max(
+      0,
+      Math.min(100, Number.isFinite(score) ? score : 0)
+    );
+    const safePoints = Math.max(
+      0,
+      Number.isFinite(pointsAwarded) ? pointsAwarded : 0
+    );
+
+    setQuizzes(prev =>
+      prev.map(q =>
+        q.id === quizId
+          ? {
+              ...q,
+              lastScore: safeScore,
+              lastTakenDate: 'Hari ini',
+              pointsAwarded: safePoints
+            }
+          : q
+      )
+    );
+
     setStudentXp(prev => prev + safePoints);
-    showToast('success', 'Kuis Selesai!', `Nilai kamu: ${safeScore}/100. Selamat dapat +${safePoints} XP Poin! ⭐`);
+
+    showToast(
+      'success',
+      'Kuis Selesai!',
+      `Nilai kamu: ${safeScore}/100. Selamat dapat +${safePoints} XP Poin! ⭐`
+    );
   };
+
 
   const resetToDefaults = () => {
     verifiedTransactionIdsRef.current.clear();
