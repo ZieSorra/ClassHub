@@ -279,12 +279,17 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const batchSetAttendance = (entries: AttendanceEntry[]) => {
+    // Normalize to one record per student before saving or updating summaries.
+    const uniqueEntries = Array.from(
+      new Map(entries.map(entry => [entry.studentId, entry])).values()
+    );
     const previousByStudent = new Map<string, AttendanceEntry>(
       attendanceList.map(entry => [entry.studentId, entry])
     );
-    setAttendanceList(entries);
+
+    setAttendanceList(uniqueEntries);
     setStudents(prev => prev.map(student => {
-      const entry = entries.find(item => item.studentId === student.id);
+      const entry = uniqueEntries.find(item => item.studentId === student.id);
       if (!entry) return student;
 
       const wasPresent = previousByStudent.get(student.id)?.status === 'hadir';
@@ -306,7 +311,7 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         recentAttendance5Days
       };
     }));
-    showToast('success', 'Presensi Berhasil Disimpan', `${entries.length} data presensi siswa telah disinkronkan.`);
+    showToast('success', 'Presensi Berhasil Disimpan', `${uniqueEntries.length} data presensi siswa telah disinkronkan.`);
   };
 
   const addTransaction = (txData: Omit<Transaction, 'id' | 'receiptNumber'>) => {
