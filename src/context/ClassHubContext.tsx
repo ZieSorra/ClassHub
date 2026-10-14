@@ -174,6 +174,8 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Prevent duplicate verification from rapid repeated clicks before React re-renders.
   const verifiedTransactionIdsRef = useRef<Set<string>>(new Set());
+  const completedAssignmentIdsRef = useRef<Set<string>>(new Set());
+  const completedQuizIdsRef = useRef<Set<string>>(new Set());
 
   // Sync to local storage
   useEffect(() => {
@@ -407,39 +409,51 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const submitAssignmentProgress = (assignmentId: string, progress: number) => {
+    const safeProgress = Math.max(0, Math.min(100, Number.isFinite(progress) ? progress : 0));
     setAssignments(prev => prev.map(a => {
-      if (a.id === assignmentId) {
-        const isDone = progress >= 100;
-        return {
-          ...a,
-          currentStudentProgress: progress,
-          currentStudentStatus: isDone ? 'sudah_dinilai' : 'sedang_dikerjakan',
-          totalSubmissions: isDone ? Math.min(a.totalStudents, a.totalSubmissions + 1) : a.totalSubmissions
-        };
-      }
-      return a;
+      if (a.id !== assignmentId) return a;
+
+      const wasDone = a.currentStudentProgress >= 100 || completedAssignmentIdsRef.current.has(assignmentId);
+      const isDone = safeProgress >= 100;
+      if (isDone) completedAssignmentIdsRef.current.add(assignmentId);
+
+      return {
+        ...a,
+        currentStudentProgress: safeProgress,
+        currentStudentStatus: isDone ? 'sudah_dinilai' : 'sedang_dikerjakan',
+        totalSubmissions: isDone && !wasDone ? Math.min(a.totalStudents, a.totalSubmissions + 1) : a.totalSubmissions
+      };
     }));
-    showToast('success', 'Tugas Diperbarui', `Progres pengumpulan tugas kini ${progress}%.`);
+    showToast('success', 'Tugas Diperbarui', `Progres pengumpulan tugas kini ${safeProgress}%.`);
   };
 
   const finishQuiz = (quizId: string, score: number, pointsAwarded: number) => {
-    setQuizzes(prev => prev.map(q => {
-      if (q.id === quizId) {
-        return {
-          ...q,
-          lastScore: score,
-          lastTakenDate: 'Hari ini',
-          pointsAwarded
-        };
-      }
-      return q;
-    }));
-    setStudentXp(prev => prev + pointsAwarded);
-    showToast('success', 'Kuis Selesai!', `Nilai kamu: ${score}/100. Selamat dapat +${pointsAwarded} XP Poin! ⭐`);
+    if (completedQuizIdsRef.current.has(quizId)) {
+      showToast('info', 'Kuis Sudah Diselesaikan', 'Hadiah XP untuk kuis ini sudah diberikan pada sesi demo ini.');
+      return;
+    }
+
+    const quizExists = quizzes.some(quiz => quiz.id === quizId);
+    if (!quizExists) {
+      showToast('error', 'Kuis Tidak Ditemukan', 'Kuis demo yang dipilih tidak tersedia.');
+      return;
+    }
+
+    completedQuizIdsRef.current.add(quizId);
+    const safeScore = Math.max(0, Math.min(100, Number.isFinite(score) ? score : 0));
+    const safePoints = Math.max(0, Number.isFinite(pointsAwarded) ? pointsAwarded : 0);
+    setQuizzes(prev => prev.map(q => q.id === quizId
+      ? { ...q, lastScore: safeScore, lastTakenDate: 'Hari ini', pointsAwarded: safePoints }
+      : q
+    ));
+    setStudentXp(prev => prev + safePoints);
+    showToast('success', 'Kuis Selesai!', `Nilai kamu: ${safeScore}/100. Selamat dapat +${safePoints} XP Poin! ⭐`);
   };
 
   const resetToDefaults = () => {
     verifiedTransactionIdsRef.current.clear();
+    completedAssignmentIdsRef.current.clear();
+    completedQuizIdsRef.current.clear();
     localStorage.removeItem(`${STORAGE_KEY}_students`);
     localStorage.removeItem(`${STORAGE_KEY}_attendance`);
     localStorage.removeItem(`${STORAGE_KEY}_transactions`);
