@@ -174,7 +174,6 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Prevent duplicate verification from rapid repeated clicks before React re-renders.
   const verifiedTransactionIdsRef = useRef<Set<string>>(new Set());
-  const completedAssignmentIdsRef = useRef<Set<string>>(new Set());
   const completedQuizIdsRef = useRef<Set<string>>(new Set());
 
   // Sync to local storage
@@ -413,9 +412,8 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setAssignments(prev => prev.map(a => {
       if (a.id !== assignmentId) return a;
 
-      const wasDone = a.currentStudentProgress >= 100 || completedAssignmentIdsRef.current.has(assignmentId);
+      const wasDone = a.currentStudentProgress >= 100;
       const isDone = safeProgress >= 100;
-      if (isDone) completedAssignmentIdsRef.current.add(assignmentId);
 
       return {
         ...a,
@@ -452,7 +450,6 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const resetToDefaults = () => {
     verifiedTransactionIdsRef.current.clear();
-    completedAssignmentIdsRef.current.clear();
     completedQuizIdsRef.current.clear();
     localStorage.removeItem(`${STORAGE_KEY}_students`);
     localStorage.removeItem(`${STORAGE_KEY}_attendance`);
