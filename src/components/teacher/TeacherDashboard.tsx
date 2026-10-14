@@ -50,7 +50,7 @@ export const TeacherDashboard: React.FC = () => {
                 <span className="material-symbols-outlined text-[14px]">auto_stories</span> Semester Genap
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold">
-                <span className="material-symbols-outlined text-[14px]">today</span> Senin, 16 Februari 2026
+                <span className="material-symbols-outlined text-[14px]">today</span> {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
             

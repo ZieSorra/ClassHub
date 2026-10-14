@@ -22,3 +22,70 @@
   -webkit-font-smoothing: antialiased;
 }
 
+
+
+/* Print only the receipt, never the dashboard or modal backdrop. */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible !important;
+  }
+
+  #printable-receipt {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 10mm 8mm !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #111827 !important;
+    overflow: visible !important;
+  }
+
+  #printable-receipt .bg-slate-50 {
+    background: #f8fafc !important;
+  }
+
+  #printable-receipt .rounded-2xl,
+  #printable-receipt .rounded-xl {
+    border-radius: 3mm !important;
+  }
+
+  .receipt-modal,
+  .receipt-controls {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .receipt-controls {
+    display: none !important;
+  }
+}

@@ -17,7 +17,8 @@ export type StudentNavTab =
   | 'pembayaran' 
   | 'tugas' 
   | 'handnote' 
-  | 'bank-soal';
+  | 'bank-soal'
+  | 'profil';
 
 export type Gender = 'L' | 'P';
 

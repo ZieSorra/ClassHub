@@ -4,10 +4,12 @@ import { TeacherNavTab } from '../../types';
 
 interface TeacherSidebarProps {
   isMini?: boolean;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
   onToggleMini?: () => void;
 }
 
-export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isMini = false, onToggleMini }) => {
+export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isMini = false, isMobileOpen = false, onCloseMobile, onToggleMini }) => {
   const { teacherTab, setTeacherTab, setRoleMode, setSelectedStudent } = useClassHub();
 
   const navItems: { id: TeacherNavTab; label: string; icon: string }[] = [
@@ -25,14 +27,24 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isMini = false, 
   const handleNavClick = (tabId: TeacherNavTab) => {
     setSelectedStudent(null);
     setTeacherTab(tabId);
+    onCloseMobile?.();
   };
 
   return (
-    <aside 
-      className={`fixed left-0 top-0 h-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between transition-all duration-200 border-r border-[#eff4ff] ${
-        isMini ? 'w-20' : 'w-72'
-      }`}
-    >
+    <>
+      {isMobileOpen && (
+        <button
+          type="button"
+          aria-label="Tutup navigasi guru"
+          className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+      <aside 
+        className={`fixed left-0 top-0 h-full bg-white shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between transition-all duration-200 border-r border-[#eff4ff] ${
+          isMini ? 'w-72 lg:w-20' : 'w-72'
+        } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
       <div className="flex flex-col flex-1 overflow-y-auto">
         {/* Brand Header */}
         <div className="h-20 px-6 flex items-center justify-between border-b border-[#eff4ff]">
@@ -141,6 +153,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isMini = false, 
           </div>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };

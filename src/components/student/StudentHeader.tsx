@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useClassHub } from '../../context/ClassHubContext';
 import { StudentNavTab } from '../../types';
 
 export const StudentHeader: React.FC = () => {
   const { studentTab, setStudentTab, setRoleMode, currentStudent, showToast } = useClassHub();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const navItems: { id: StudentNavTab; label: string }[] = [
     { id: 'beranda', label: 'Beranda' },
@@ -12,6 +13,7 @@ export const StudentHeader: React.FC = () => {
     { id: 'tugas', label: 'Tugas' },
     { id: 'handnote', label: 'Handnote' },
     { id: 'bank-soal', label: 'Bank Soal' },
+    { id: 'profil', label: 'Profil Saya' },
   ];
 
   return (
@@ -56,7 +58,16 @@ export const StudentHeader: React.FC = () => {
         </div>
 
         {/* Right Controls: Notifications, Student Profile, Switch Role */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            className="lg:hidden p-2 rounded-xl bg-[#eff4ff] text-[#004ac6]"
+            aria-label={isMobileNavOpen ? 'Tutup navigasi' : 'Buka navigasi'}
+            aria-expanded={isMobileNavOpen}
+            onClick={() => setIsMobileNavOpen(open => !open)}
+          >
+            <span className="material-symbols-outlined">{isMobileNavOpen ? 'close' : 'menu'}</span>
+          </button>
           <button
             type="button"
             onClick={() => showToast('info', 'Notifikasi Siswa', 'Kamu memiliki 2 tugas aktif dan 1 kuis baru.')}
@@ -106,6 +117,27 @@ export const StudentHeader: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {isMobileNavOpen && (
+        <nav aria-label="Navigasi portal siswa" className="lg:hidden absolute top-full left-0 right-0 bg-white border-b border-[#eff4ff] shadow-lg p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setStudentTab(item.id);
+                setIsMobileNavOpen(false);
+              }}
+              aria-current={studentTab === item.id ? 'page' : undefined}
+              className={`rounded-xl px-3 py-3 text-left text-sm font-bold transition-colors ${
+                studentTab === item.id ? 'bg-[#2563eb] text-white' : 'bg-[#eff4ff] text-[#434655] hover:bg-[#dce9ff]'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
     </header>
   );
 };

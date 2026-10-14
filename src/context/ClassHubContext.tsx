@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   RoleMode, 
   TeacherNavTab, 
@@ -48,6 +48,7 @@ interface ClassHubContextType {
   attendanceList: AttendanceEntry[];
   updateStudentAttendance: (studentId: string, status: AttendanceStatus, note?: string) => void;
   batchSetAttendance: (entries: AttendanceEntry[]) => void;
+  updateStudentNickname: (studentId: string, nickname: string) => void;
   
   transactions: Transaction[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'receiptNumber'>) => void;
@@ -126,12 +127,40 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [feeCategories] = useState<FeeCategory[]>(INITIAL_FEE_CATEGORIES);
-  const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
+  const [assignments, setAssignments] = useState<Assignment[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_assignments`);
+      return saved ? JSON.parse(saved) : INITIAL_ASSIGNMENTS;
+    } catch {
+      return INITIAL_ASSIGNMENTS;
+    }
+  });
   const [handnotes] = useState<Handnote[]>(INITIAL_HANDNOTES);
-  const [quizzes, setQuizzes] = useState<Quiz[]>(INITIAL_QUIZZES);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_quizzes`);
+      return saved ? JSON.parse(saved) : INITIAL_QUIZZES;
+    } catch {
+      return INITIAL_QUIZZES;
+    }
+  });
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_activityLogs`);
+      return saved ? JSON.parse(saved) : INITIAL_ACTIVITY_LOGS;
+    } catch {
+      return INITIAL_ACTIVITY_LOGS;
+    }
+  });
 
-  const [studentXp, setStudentXp] = useState<number>(120);
+  const [studentXp, setStudentXp] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_studentXp`);
+      return saved ? JSON.parse(saved) : 120;
+    } catch {
+      return 120;
+    }
+  });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedHandnote, setSelectedHandnote] = useState<Handnote | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
@@ -142,6 +171,10 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Toasts
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Prevent duplicate verification from rapid repeated clicks before React re-renders.
+  const verifiedTransactionIdsRef = useRef<Set<string>>(new Set());
+  const completedQuizIdsRef = useRef<Set<string>>(new Set());
 
   // Sync to local storage
   useEffect(() => {
@@ -168,6 +201,22 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [transactions]);
 
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_assignments`, JSON.stringify(assignments)); } catch (e) { console.error(e); }
+  }, [assignments]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_quizzes`, JSON.stringify(quizzes)); } catch (e) { console.error(e); }
+  }, [quizzes]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_activityLogs`, JSON.stringify(activityLogs)); } catch (e) { console.error(e); }
+  }, [activityLogs]);
+
+  useEffect(() => {
+    try { localStorage.setItem(`${STORAGE_KEY}_studentXp`, JSON.stringify(studentXp)); } catch (e) { console.error(e); }
+  }, [studentXp]);
+
   const showToast = (type: 'success' | 'info' | 'error', title: string, message: string) => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 6);
     setToasts(prev => [...prev, { id, type, title, message }]);
@@ -191,6 +240,10 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateStudentAttendance = (studentId: string, status: AttendanceStatus, note?: string) => {
+    const previousEntry = attendanceList.find(entry => entry.studentId === studentId);
+    const wasPresent = previousEntry?.status === 'hadir';
+    const isPresent = status === 'hadir';
+
     setAttendanceList(prev => {
       const idx = prev.findIndex(a => a.studentId === studentId);
       const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
@@ -202,28 +255,63 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return [...prev, { studentId, status, time: currentTime, note }];
     });
 
-    // Update student's attendance stats
-    setStudents(prev => prev.map(s => {
-      if (s.id === studentId) {
-        const isHadir = status === 'hadir';
-        return {
-          ...s,
-          attendanceRate: isHadir ? 98 : (status === 'sakit' ? 86 : 94),
-          recentAttendance5Days: [
-            ...s.recentAttendance5Days.slice(1),
-            { day: 'Hari Ini', date: 'Hari ini', status, time: 'Tercatat' }
-          ]
-        };
-      }
-      return s;
+    setStudents(prev => prev.map(student => {
+      if (student.id !== studentId) return student;
+      const attendanceDaysCount = Math.max(0, Math.min(
+        student.totalDays,
+        student.attendanceDaysCount + Number(isPresent) - Number(wasPresent)
+      ));
+      const todayEntry = { day: 'Hari Ini', date: 'Hari ini', status, time: 'Tercatat' };
+      const hasToday = student.recentAttendance5Days.some(entry => entry.date === 'Hari ini');
+      const recentAttendance5Days = hasToday
+        ? student.recentAttendance5Days.map(entry => entry.date === 'Hari ini' ? todayEntry : entry)
+        : [...student.recentAttendance5Days.slice(-4), todayEntry];
+
+      return {
+        ...student,
+        attendanceDaysCount,
+        attendanceRate: student.totalDays > 0 ? Math.round((attendanceDaysCount / student.totalDays) * 100) : 0,
+        recentAttendance5Days
+      };
     }));
 
     showToast('success', 'Presensi Diperbarui', `Status presensi berhasil diubah ke ${status.toUpperCase()}.`);
   };
 
   const batchSetAttendance = (entries: AttendanceEntry[]) => {
-    setAttendanceList(entries);
-    showToast('success', 'Presensi Berhasil Disimpan', `${entries.length} data presensi siswa telah disinkronkan.`);
+    // Normalize to one record per student before saving or updating summaries.
+    const uniqueEntries = Array.from(
+      new Map(entries.map(entry => [entry.studentId, entry])).values()
+    );
+    const previousByStudent = new Map<string, AttendanceEntry>(
+      attendanceList.map(entry => [entry.studentId, entry])
+    );
+
+    setAttendanceList(uniqueEntries);
+    setStudents(prev => prev.map(student => {
+      const entry = uniqueEntries.find(item => item.studentId === student.id);
+      if (!entry) return student;
+
+      const wasPresent = previousByStudent.get(student.id)?.status === 'hadir';
+      const isPresent = entry.status === 'hadir';
+      const attendanceDaysCount = Math.max(0, Math.min(
+        student.totalDays,
+        student.attendanceDaysCount + Number(isPresent) - Number(wasPresent)
+      ));
+      const todayEntry = { day: 'Hari Ini', date: 'Hari ini', status: entry.status, time: entry.time || 'Tercatat' };
+      const hasToday = student.recentAttendance5Days.some(item => item.date === 'Hari ini');
+      const recentAttendance5Days = hasToday
+        ? student.recentAttendance5Days.map(item => item.date === 'Hari ini' ? todayEntry : item)
+        : [...student.recentAttendance5Days.slice(-4), todayEntry];
+
+      return {
+        ...student,
+        attendanceDaysCount,
+        attendanceRate: student.totalDays > 0 ? Math.round((attendanceDaysCount / student.totalDays) * 100) : 0,
+        recentAttendance5Days
+      };
+    }));
+    showToast('success', 'Presensi Berhasil Disimpan', `${uniqueEntries.length} data presensi siswa telah disinkronkan.`);
   };
 
   const addTransaction = (txData: Omit<Transaction, 'id' | 'receiptNumber'>) => {
@@ -270,55 +358,160 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const verifyTransaction = (txId: string) => {
-    setTransactions(prev => prev.map(t => {
-      if (t.id === txId) {
-        return {
-          ...t,
-          status: 'lunas',
-          verifiedBy: 'Ibu Nurul Aini, S.Pd.'
-        };
-      }
-      return t;
-    }));
-    showToast('success', 'Pembayaran Diverifikasi', 'Status transaksi telah diubah menjadi LUNAS.');
+    if (verifiedTransactionIdsRef.current.has(txId)) {
+      showToast('info', 'Transaksi Sudah Diproses', 'Transaksi ini sudah diproses; saldo tidak dikurangi lagi.');
+      return;
+    }
+
+    const transaction = transactions.find(item => item.id === txId);
+    if (!transaction) {
+      showToast('error', 'Transaksi Tidak Ditemukan', 'Transaksi demo yang dipilih tidak tersedia.');
+      return;
+    }
+    if (transaction.status === 'lunas') {
+      showToast('info', 'Transaksi Sudah Lunas', 'Pembayaran ini sudah diverifikasi; saldo tidak dikurangi lagi.');
+      return;
+    }
+
+    // Lock synchronously before scheduling React state updates, so rapid double clicks
+    // cannot deduct the same transaction twice before the next render.
+    verifiedTransactionIdsRef.current.add(txId);
+    setTransactions(prev => prev.map(item => item.id === txId
+      ? { ...item, status: 'lunas', verifiedBy: 'Ibu Nurul Aini, S.Pd.' }
+      : item
+    ));
+    setStudents(prev => prev.map(student => student.id === transaction.studentId
+      ? { ...student, kasPendingAmount: Math.max(0, student.kasPendingAmount - transaction.amount) }
+      : student
+    ));
+    setActivityLogs(prev => [{
+      id: 'log-' + Date.now(),
+      actor: 'Ibu Nurul Aini',
+      actionText: 'memverifikasi pembayaran',
+      highlightText: `${transaction.category} (Rp ${transaction.amount.toLocaleString('id-ID')})`,
+      suffixText: `untuk ${transaction.studentName}.`,
+      timeAgo: 'Baru saja',
+      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB',
+      icon: 'verified',
+      iconBg: 'bg-tertiary-fixed',
+      iconColor: 'text-tertiary'
+    }, ...prev]);
+    showToast('success', 'Pembayaran Diverifikasi', 'Status transaksi dan tunggakan siswa berhasil diperbarui.');
+  };
+
+  const updateStudentNickname = (studentId: string, nickname: string) => {
+    const cleanNickname = nickname.trim().slice(0, 40);
+    if (!cleanNickname) {
+      showToast('error', 'Nama Panggilan Belum Valid', 'Nama panggilan tidak boleh kosong.');
+      return;
+    }
+    setStudents(prev => prev.map(student => student.id === studentId
+      ? { ...student, nickname: cleanNickname }
+      : student
+    ));
+    showToast('success', 'Preferensi Diperbarui', 'Nama panggilan demo berhasil diperbarui di browser ini.');
   };
 
   const submitAssignmentProgress = (assignmentId: string, progress: number) => {
+    const safeProgress = Math.max(0, Math.min(100, Number.isFinite(progress) ? progress : 0));
     setAssignments(prev => prev.map(a => {
-      if (a.id === assignmentId) {
-        const isDone = progress >= 100;
-        return {
-          ...a,
-          currentStudentProgress: progress,
-          currentStudentStatus: isDone ? 'sudah_dinilai' : 'sedang_dikerjakan',
-          totalSubmissions: isDone ? Math.min(a.totalStudents, a.totalSubmissions + 1) : a.totalSubmissions
-        };
-      }
-      return a;
+      if (a.id !== assignmentId) return a;
+
+      const wasDone = a.currentStudentProgress >= 100;
+      const isDone = safeProgress >= 100;
+
+      return {
+        ...a,
+        currentStudentProgress: safeProgress,
+        currentStudentStatus: isDone ? 'sudah_dinilai' : 'sedang_dikerjakan',
+        totalSubmissions: isDone && !wasDone ? Math.min(a.totalStudents, a.totalSubmissions + 1) : a.totalSubmissions
+      };
     }));
-    showToast('success', 'Tugas Diperbarui', `Progres pengumpulan tugas kini ${progress}%.`);
+    showToast('success', 'Tugas Diperbarui', `Progres pengumpulan tugas kini ${safeProgress}%.`);
   };
 
+  
   const finishQuiz = (quizId: string, score: number, pointsAwarded: number) => {
-    setQuizzes(prev => prev.map(q => {
-      if (q.id === quizId) {
-        return {
-          ...q,
-          lastScore: score,
-          lastTakenDate: 'Hari ini',
-          pointsAwarded
-        };
-      }
-      return q;
-    }));
-    setStudentXp(prev => prev + pointsAwarded);
-    showToast('success', 'Kuis Selesai!', `Nilai kamu: ${score}/100. Selamat dapat +${pointsAwarded} XP Poin! ⭐`);
+    if (completedQuizIdsRef.current.has(quizId)) {
+      showToast(
+        'info',
+        'Kuis Sudah Diselesaikan',
+        'Hadiah XP untuk kuis ini sudah diberikan pada sesi demo ini.'
+      );
+      return;
+    }
+
+    const quiz = quizzes.find(item => item.id === quizId);
+    if (!quiz) {
+      showToast(
+        'error',
+        'Kuis Tidak Ditemukan',
+        'Kuis demo yang dipilih tidak tersedia.'
+      );
+      return;
+    }
+
+    // Cegah XP diberikan lagi setelah halaman dimuat ulang pada hari yang sama.
+    const today = new Date().toLocaleDateString('id-ID');
+    const lastTakenDate = quiz.lastTakenDate;
+
+    if (
+      lastTakenDate === 'Hari ini' ||
+      lastTakenDate === today
+    ) {
+      completedQuizIdsRef.current.add(quizId);
+      showToast(
+        'info',
+        'Kuis Sudah Diselesaikan',
+        'Kuis ini sudah diselesaikan hari ini; XP tidak diberikan dua kali.'
+      );
+      return;
+    }
+
+    completedQuizIdsRef.current.add(quizId);
+
+    const safeScore = Math.max(
+      0,
+      Math.min(100, Number.isFinite(score) ? score : 0)
+    );
+    const safePoints = Math.max(
+      0,
+      Number.isFinite(pointsAwarded) ? pointsAwarded : 0
+    );
+
+    setQuizzes(prev =>
+      prev.map(q =>
+        q.id === quizId
+          ? {
+              ...q,
+              lastScore: safeScore,
+              lastTakenDate: 'Hari ini',
+              pointsAwarded: safePoints
+            }
+          : q
+      )
+    );
+
+    setStudentXp(prev => prev + safePoints);
+
+    showToast(
+      'success',
+      'Kuis Selesai!',
+      `Nilai kamu: ${safeScore}/100. Selamat dapat +${safePoints} XP Poin! ⭐`
+    );
   };
+
 
   const resetToDefaults = () => {
+    verifiedTransactionIdsRef.current.clear();
+    completedQuizIdsRef.current.clear();
     localStorage.removeItem(`${STORAGE_KEY}_students`);
     localStorage.removeItem(`${STORAGE_KEY}_attendance`);
     localStorage.removeItem(`${STORAGE_KEY}_transactions`);
+    localStorage.removeItem(`${STORAGE_KEY}_assignments`);
+    localStorage.removeItem(`${STORAGE_KEY}_quizzes`);
+    localStorage.removeItem(`${STORAGE_KEY}_activityLogs`);
+    localStorage.removeItem(`${STORAGE_KEY}_studentXp`);
     setStudents(INITIAL_STUDENTS);
     setAttendanceList(INITIAL_DAILY_ATTENDANCE);
     setTransactions(INITIAL_TRANSACTIONS);
@@ -347,6 +540,7 @@ export const ClassHubProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         attendanceList,
         updateStudentAttendance,
         batchSetAttendance,
+        updateStudentNickname,
         transactions,
         addTransaction,
         verifyTransaction,
