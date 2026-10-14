@@ -25,10 +25,10 @@ export const KwitansiModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
+    <div className="receipt-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
       <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-slate-100">
         {/* Top Control Bar */}
-        <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+        <div className="receipt-controls p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[18px] text-blue-600">receipt_long</span>
             Tanda Bukti Pembayaran Sah
@@ -59,14 +59,11 @@ export const KwitansiModal: React.FC = () => {
             <div className="flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-[24px] text-blue-600">school</span>
               <h3 className="font-extrabold text-base tracking-tight text-slate-900 uppercase">
-                SD BINTANG BANGSA
+                SD ISLAM DARUL MU’MININ
               </h3>
             </div>
             <p className="text-[11px] text-slate-600 font-medium">
               Buku Kas & Administrasi Keuangan Kelas V-A • T.A. 2026/2027
-            </p>
-            <p className="text-[10px] text-slate-400 font-mono">
-              Jl. Pendidikan No. 45 Bandung • NPSN: 20219482
             </p>
           </div>
 
@@ -124,13 +121,12 @@ export const KwitansiModal: React.FC = () => {
               <p className="text-xs font-bold text-slate-900 underline underline-offset-2">
                 Ibu Nurul Aini, S.Pd.
               </p>
-              <p className="text-[9px] text-slate-500 font-mono">NIP. 19850412 201001 2 021</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <div className="receipt-controls p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
           <button
             type="button"
             onClick={closeModal}
