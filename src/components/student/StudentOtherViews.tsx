@@ -20,7 +20,7 @@ export const StudentOtherViews: React.FC<{ tab: StudentNavTab }> = ({ tab }) => 
           <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#eff4ff] text-center">
             <span className="text-xs text-[#006056] font-bold">Total Kehadiran</span>
             <p className="text-3xl font-extrabold text-[#0b1c30] font-mono mt-1">{currentStudent.attendanceDaysCount}</p>
-            <span className="text-[11px] text-slate-500">dari 50 hari efektif</span>
+            <span className="text-[11px] text-slate-500">dari {currentStudent.totalDays} hari efektif</span>
           </div>
           <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#eff4ff] text-center">
             <span className="text-xs text-[#006056] font-bold">Persentase</span>
@@ -28,14 +28,14 @@ export const StudentOtherViews: React.FC<{ tab: StudentNavTab }> = ({ tab }) => 
             <span className="text-[11px] text-[#006056] font-bold">Sangat Baik</span>
           </div>
           <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#eff4ff] text-center">
-            <span className="text-xs text-[#712ae2] font-bold">Izin</span>
-            <p className="text-3xl font-extrabold text-[#712ae2] font-mono mt-1">1</p>
-            <span className="text-[11px] text-slate-500">Izin dokter</span>
+            <span className="text-xs text-[#712ae2] font-bold">Izin (5 hari terakhir)</span>
+            <p className="text-3xl font-extrabold text-[#712ae2] font-mono mt-1">{currentStudent.recentAttendance5Days.filter(entry => entry.status === 'izin').length}</p>
+            <span className="text-[11px] text-slate-500">Berdasarkan riwayat demo</span>
           </div>
           <div className="p-4 rounded-2xl bg-white shadow-sm border border-[#eff4ff] text-center">
-            <span className="text-xs text-slate-500 font-bold">Alpa</span>
-            <p className="text-3xl font-extrabold text-slate-700 font-mono mt-1">0</p>
-            <span className="text-[11px] text-slate-500">Disiplin</span>
+            <span className="text-xs text-slate-500 font-bold">Alpa (5 hari terakhir)</span>
+            <p className="text-3xl font-extrabold text-slate-700 font-mono mt-1">{currentStudent.recentAttendance5Days.filter(entry => entry.status === 'alpa').length}</p>
+            <span className="text-[11px] text-slate-500">Berdasarkan riwayat demo</span>
           </div>
         </div>
 
